@@ -69,10 +69,18 @@ def main() -> None:
             inputs["labels"] = targets["input_ids"]
             return inputs
 
-        prompts = [
-            "Translate English to Hindi.\nEnglish: " + source + "\nHindi:"
-            for source in batch["source"]
-        ]
+        prompts = []
+        for source in batch["source"]:
+            user_text = "Translate English to Hindi.\nEnglish: " + source + "\nHindi:"
+            if getattr(tokenizer, "chat_template", None):
+                prompt = tokenizer.apply_chat_template(
+                    [{"role": "user", "content": user_text}],
+                    tokenize=False,
+                    add_generation_prompt=True,
+                )
+            else:
+                prompt = user_text
+            prompts.append(prompt)
         encoded_prompts = tokenizer(prompts, add_special_tokens=False)
         full_text = [p + " " + t + tokenizer.eos_token for p, t in zip(prompts, batch["target"])]
         encoded_full = tokenizer(full_text, max_length=args.max_length, truncation=True, add_special_tokens=False)
