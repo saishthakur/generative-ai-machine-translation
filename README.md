@@ -14,7 +14,7 @@ Compare encoder-decoder and decoder-only systems on the same held-out English-to
 - **Dataset source:** [OPUS](https://opus.nlpl.eu/)
 - **Configuration:** `en-hi`; fields are parallel English (`en`) and Hindi (`hi) strings in the `translation` column.
 - **Published split sizes:** 534,319 training pairs and 2,000 pairs in each of validation and test (as listed in the dataset card).
-- **Working subset:** The preparation script defaults to 20,000 training, 1,000 validation, and 1,000 test examples. It keeps the corpus-provided validation/test splits and shuffles only the training stream with seed 4403.
+- **Working subset:** The preparation script defaults to 20,000 training, 1,000 validation, and 1,000 test examples. It keeps the corpus-provided validation/test splits and shuffles only the training stream with seed 4403. Preprocessing currently trims leading/trailing whitespace and drops empty pairs; it does not perform deduplication or length filtering.
 - **License:** The Hugging Face dataset card currently lists the license as unknown. Check the corpus and underlying source terms for the intended use, cite OPUS-100, and do not redistribute downloaded data unless permitted.
 
 OPUS-100's corpus card describes its language coverage and its pre-separated train, development, and test samples. See the [dataset card](https://huggingface.co/datasets/Helsinki-NLP/opus-100) and the [OPUS-100 paper](https://aclanthology.org/2020.acl-main.148/). The default subset limits are intended to keep experiments manageable; state the actual counts and any additional filtering in the final report.
@@ -96,7 +96,13 @@ python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B
 python scripts/evaluate.py --architecture causal --model google/gemma-3-1b-it --output-dir outputs/evaluation/gemma
 ```
 
-Each evaluation run writes predictions as CSV and metrics as JSON. Metrics include corpus BLEU, chrF, total and per-example inference time, parameter count, device, and temperature. Training scripts also save training runtime and parameter count. For a fair runtime comparison, use the same machine, test rows, batch size, and generation limit.
+Each evaluation run writes predictions as CSV and metrics as JSON. Metrics include corpus BLEU, chrF, total and per-example inference time, parameter count, device, temperature, batch size, generation limit, and metric-library version. Training scripts also save training runtime and parameter count. For a fair runtime comparison, use the same machine, test rows, batch size, and generation limit.
+
+After completing runs, combine the JSON results into a report-ready CSV:
+
+```bash
+python scripts/summarize_results.py --outputs-dir outputs --output outputs/results_summary.csv
+```
 
 ### 6. Analyze sampling temperature
 
@@ -132,6 +138,7 @@ Inspect examples from every model. Translation systems can omit or add meaning, 
 - `scripts/train_basic_transformer.py` — train the encoder-decoder baseline from random initialization.
 - `scripts/train_pretrained.py` — fine-tune an encoder-decoder or causal model.
 - `scripts/evaluate.py` — generate translations, save predictions, and calculate metrics.
+- `scripts/summarize_results.py` — combine run metrics into a comparison CSV.
 - `requirements.txt` — Python dependencies.
 - `data/processed/` and `outputs/` — generated locally; do not commit model weights or dataset files.
 
