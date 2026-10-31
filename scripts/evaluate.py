@@ -39,17 +39,28 @@ def main() -> None:
 
     for start in range(0, len(rows), args.batch_size):
         batch_sources = sources[start : start + args.batch_size]
-        prompts = (
-            ["translate English to Hindi: " + s for s in batch_sources]
-            if args.architecture == "seq2seq"
-            else ["Translate English to Hindi.\nEnglish: " + s + "\nHindi:" for s in batch_sources]
-        )
+        if args.architecture == "seq2seq":
+            prompts = ["translate English to Hindi: " + s for s in batch_sources]
+        else:
+            prompts = []
+            for source in batch_sources:
+                user_text = "Translate English to Hindi.\nEnglish: " + source + "\nHindi:"
+                if getattr(tokenizer, "chat_template", None):
+                    prompt = tokenizer.apply_chat_template(
+                        [{"role": "user", "content": user_text}],
+                        tokenize=False,
+                        add_generation_prompt=True,
+                    )
+                else:
+                    prompt = user_text
+                prompts.append(prompt)
         inputs = tokenizer(
             prompts,
             return_tensors="pt",
             padding=True,
             truncation=True,
             max_length=args.max_input_length,
+            add_special_tokens=args.architecture != "causal",
         ).to(device)
         generation = {
             "max_new_tokens": args.max_new_tokens,
