@@ -97,7 +97,6 @@ def main() -> None:
         eval_strategy="epoch",
         save_strategy="epoch",
         logging_steps=50,
-        predict_with_generate=False if args.architecture == "causal" else True,
         report_to="none",
         seed=args.seed,
         data_seed=args.seed,
@@ -120,3 +119,6 @@ def main() -> None:
     tokenizer.save_pretrained(str(args.output_dir))
     print(f"Saved fine-tuned model and tokenizer to {args.output_dir}")
 
+
+if __name__ == "__main__":
+    main()
