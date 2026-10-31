@@ -148,3 +148,6 @@ def main() -> None:
     )
     print(f"Saved randomly initialized Transformer and training metrics to {args.output_dir}")
 
+
+if __name__ == "__main__":
+    main()
