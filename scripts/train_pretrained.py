@@ -75,7 +75,7 @@ def main() -> None:
         ]
         encoded_prompts = tokenizer(prompts, add_special_tokens=False)
         full_text = [p + " " + t + tokenizer.eos_token for p, t in zip(prompts, batch["target"])]
-        encoded_full = tokenizer(full_text, max_length=args.max_length, truncation=True)
+        encoded_full = tokenizer(full_text, max_length=args.max_length, truncation=True, add_special_tokens=False)
         labels = []
         for prompt_ids, input_ids in zip(encoded_prompts["input_ids"], encoded_full["input_ids"]):
             prefix_length = min(len(prompt_ids), len(input_ids))
