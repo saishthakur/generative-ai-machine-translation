@@ -1,88 +1,146 @@
 # Generative AI for Machine Translation
 
-A comparative machine-translation study for the Foundations of Generative AI (ICT4403) Assignment 3. The project will compare encoder-decoder and decoder-only approaches on the same parallel-text test set.
+A comparative English-to-Hindi machine-translation project for Foundations of Generative AI (ICT4403), Assignment 3. The workflow covers a randomly initialized encoder-decoder Transformer, fine-tuned mT5, and prompted or fine-tuned LLaMA and Gemma systems.
 
-> **Status:** Project scaffold. The repository currently contains no implementation, selected dataset, or experiment results. Sections marked “Pending” must be completed after the experiments are run.
+> **Status:** Training and evaluation scripts are now in the repository. No model has been trained and no experiment results have been collected yet. Results must come from running the commands below; the repository does not claim performance figures.
 
 ## Objective
 
-Build and evaluate four systems for one selected source-to-target language pair:
-
-1. A basic Transformer with an encoder-decoder architecture, trained on the selected parallel corpus.
-2. mT5, fine-tuned for translation.
-3. LLaMA, adapted with a suitable fine-tuning method or evaluated with a documented prompting approach.
-4. Gemma, adapted with a suitable fine-tuning method or evaluated with a documented prompting approach.
-
-Use a manageable model size and dataset subset that fit the available compute. Generate translations for the same held-out test examples and compare quality, resource requirements, and responsible-use considerations.
+Compare encoder-decoder and decoder-only systems on the same held-out English-to-Hindi test examples. Evaluate translation quality, training or fine-tuning time, inference time, parameter count, and responsible-use concerns.
 
 ## Dataset
 
-**Language pair:** Pending selection  
-**Dataset and version:** Pending selection  
-**Source link:** Pending selection  
-**License / usage terms:** Pending verification
+- **Corpus:** [OPUS-100, English-Hindi configuration](https://huggingface.co/datasets/Helsinki-NLP/opus-100)
+- **Dataset source:** [OPUS](https://opus.nlpl.eu/)
+- **Configuration:** `en-hi`; fields are parallel English (`en`) and Hindi (`hi) strings in the `translation` column.
+- **Published split sizes:** 534,319 training pairs and 2,000 pairs in each of validation and test (as listed in the dataset card).
+- **Working subset:** The preparation script defaults to 20,000 training, 1,000 validation, and 1,000 test examples. It keeps the corpus-provided validation/test splits and shuffles only the training stream with seed 4403.
+- **License:** The Hugging Face dataset card currently lists the license as unknown. Check the corpus and underlying source terms for the intended use, cite OPUS-100, and do not redistribute downloaded data unless permitted.
 
-The final dataset description should identify the languages, source, license, number of sentence pairs used, filtering and preprocessing steps, and any deduplication or length limits. Record the exact train, validation, and test split method and random seed. Keep the test set separate from training and model selection.
+OPUS-100's corpus card describes its language coverage and its pre-separated train, development, and test samples. See the [dataset card](https://huggingface.co/datasets/Helsinki-NLP/opus-100) and the [OPUS-100 paper](https://aclanthology.org/2020.acl-main.148/). The default subset limits are intended to keep experiments manageable; state the actual counts and any additional filtering in the final report.
 
 ## Models
 
-| Model | Architecture | Planned adaptation |
+| System | Architecture | Workflow |
 | --- | --- | --- |
-| Basic Transformer | Encoder-decoder | Train from scratch on the training split |
-| mT5 | Encoder-decoder | Fine-tune a suitable pretrained checkpoint |
-| LLaMA | Decoder-only | Fine-tune or use a documented translation prompt |
-| Gemma | Decoder-only | Fine-tune or use a documented translation prompt |
+| Basic Transformer | Encoder-decoder | T5-style Transformer configuration initialized from scratch; ByT5 tokenizer only |
+| mT5 | Encoder-decoder | Fine-tune `google/mt5-small` |
+| LLaMA | Decoder-only | Prompt the base model for translation, or fine-tune using the provided causal training path |
+| Gemma | Decoder-only | Prompt the base model for translation, or fine-tune using the provided causal training path |
 
-For each model, document the exact checkpoint, tokenizer, parameter count, adaptation method, key settings, and hardware. For prompted models, include the prompt template. For fine-tuned models, report training settings and time.
+For the model comparison, use small checkpoints that fit the available hardware and record exact model IDs. Example compact checkpoints are [Llama 3.2 1B](https://huggingface.co/meta-llama/Llama-3.2-1B) and [Gemma 3 1B Instruct](https://huggingface.co/google/gemma-3-1b-it). Llama and Gemma access may require accepting their respective terms and authenticating with Hugging Face. The LLaMA and Gemma evaluation prompts are English-to-Hindi instructions; document any prompt changes.
 
-## Experimental method
+## Setup
 
-1. Prepare and document the parallel corpus, then create train, validation, and test splits.
-2. Train or adapt each model using the training data; use validation data for model selection.
-3. Translate the same test examples with all four models under documented, comparable decoding settings.
-4. Save predictions and calculate BLEU and chrF with the metric implementation and version recorded.
-5. Measure training or fine-tuning time where applicable, inference time, and parameter count. State the timing setup, hardware, batch size, and whether preprocessing is included.
-6. Repeat decoder-only inference at multiple sampling temperatures and discuss how temperature affects translation quality and consistency. Use deterministic decoding as a reference where supported.
-7. Inspect examples from all systems and discuss errors, bias, hallucinated information, cultural misrepresentation, and sensitive content.
+Python 3.10-3.12 is recommended. Model downloads and training require internet access. A CUDA GPU is strongly recommended for fine-tuning mT5, LLaMA, or Gemma. The basic Transformer can run on CPU, but training is likely to be slow.
+
+```bash
+python -m venv .venv
+# Windows PowerShell:
+.venv\Scripts\Activate.ps1
+# macOS / Linux:
+# source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
+## Step-by-step
+
+### 1. Prepare the dataset subset
+
+```bash
+python scripts/prepare_data.py --train-rows 20000 --validation-rows 1000 --test-rows 1000 --seed 4403
+```
+
+This downloads only the selected split streams and writes `data/processed/{train,validation,test}.csv`. The script does not commit downloaded data. Use the same generated CSV test file for each model.
+
+### 2. Train the basic Transformer from scratch
+
+```bash
+python scripts/train_basic_transformer.py --epochs 5 --batch-size 16
+```
+
+It saves model files and `training_metrics.json` under `outputs/basic-transformer/`. The model weights are randomly initialized; the ByT5 tokenizer is used only for text encoding.
+
+### 3. Fine-tune mT5
+
+```bash
+python scripts/train_pretrained.py --architecture seq2seq --model google/mt5-small --output-dir outputs/mt5-small --epochs 1 --batch-size 4
+```
+
+For limited GPU memory, reduce the batch size and use `--gradient-checkpointing`. Record the actual settings used.
+
+### 4. Prompt LLaMA and Gemma
+
+The assignment permits suitable prompting for the decoder-only systems. Start with zero-shot prompting on the same test set:
+
+```bash
+python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B --temperature 0 --output-dir outputs/llama
+python scripts/evaluate.py --architecture causal --model google/gemma-3-1b-it --temperature 0 --output-dir outputs/gemma
+```
+
+You may instead fine-tune either model on the training split (requires substantially more memory and accepted model access):
+
+```bash
+python scripts/train_pretrained.py --architecture causal --model meta-llama/Llama-3.2-1B --output-dir outputs/llama-finetuned --epochs 1 --batch-size 1 --gradient-checkpointing
+python scripts/train_pretrained.py --architecture causal --model google/gemma-3-1b-it --output-dir outputs/gemma-finetuned --epochs 1 --batch-size 1 --gradient-checkpointing
+```
+
+The causal training script masks the English instruction and source from the language-model loss so that the model learns to produce the Hindi target. Prefer the prompting path when compute is limited. Follow each model's license and access requirements.
+
+### 5. Evaluate all four systems
+
+```bash
+python scripts/evaluate.py --architecture seq2seq --model outputs/basic-transformer --output-dir outputs/evaluation/basic
+python scripts/evaluate.py --architecture seq2seq --model outputs/mt5-small --output-dir outputs/evaluation/mt5
+python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B --output-dir outputs/evaluation/llama
+python scripts/evaluate.py --architecture causal --model google/gemma-3-1b-it --output-dir outputs/evaluation/gemma
+```
+
+Each evaluation run writes predictions as CSV and metrics as JSON. Metrics include corpus BLEU, chrF, total and per-example inference time, parameter count, device, and temperature. Training scripts also save training runtime and parameter count. For a fair runtime comparison, use the same machine, test rows, batch size, and generation limit.
+
+### 6. Analyze sampling temperature
+
+The evaluator uses deterministic decoding when temperature is zero. For causal models, repeat evaluation at several positive temperatures, for example:
+
+```bash
+python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B --temperature 0.3 --output-dir outputs/evaluation/llama-t03
+python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B --temperature 0.7 --output-dir outputs/evaluation/llama-t07
+python scripts/evaluate.py --architecture causal --model google/gemma-3-1b-it --temperature 0.3 --output-dir outputs/evaluation/gemma-t03
+python scripts/evaluate.py --architecture causal --model google/gemma-3-1b-it --temperature 0.7 --output-dir outputs/evaluation/gemma-t07
+```
+
+Compare BLEU/chrF and inspect sample translations for changes in fluency, consistency, and faithfulness. Record all generation settings. Sampling makes outputs stochastic; rerun with multiple seeds or report that limitation.
 
 ## Results
 
-Results have not yet been collected. Replace the pending cells after running the experiments; do not report estimates as measured results.
+No results have been produced yet. Fill this table only after all runs finish. Include the exact checkpoint, subset size, hardware, batch size, decoding settings, and metric versions in the report.
 
-| Model | BLEU | chrF | Training / fine-tuning time | Inference time | Parameters |
+| Model | BLEU | chrF | Train / fine-tune time | Inference time | Parameters |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Basic Transformer | Pending | Pending | Pending | Pending | Pending |
 | mT5 | Pending | Pending | Pending | Pending | Pending |
-| LLaMA | Pending | Pending | Pending | Pending | Pending |
-| Gemma | Pending | Pending | Pending | Pending | Pending |
-
-### Temperature analysis
-
-Pending. Report the tested temperatures, decoding settings, and evaluation scores for each setting. Include representative examples and explain any trade-off between fluency, consistency, and faithfulness.
-
-### Comparison and conclusion
-
-Pending. Compare the encoder-decoder and decoder-only systems in light of their parameter counts, pretraining, tokenization, adaptation method, translation quality, and compute cost. Identify the best-performing model only after evaluating the recorded results, and state the criteria used.
+| LLaMA | Pending | Pending | N/A if prompted | Pending | Pending |
+| Gemma | Pending | Pending | N/A if prompted | Pending | Pending |
 
 ## Responsible use
 
-Translation output can reflect biases in training data, omit or add meaning, misrepresent cultural context, or produce inappropriate translations of sensitive material. Review outputs with fluent speakers where possible, especially for high-impact or sensitive content. Preserve source meaning, avoid treating generated translations as verified facts, document known limitations, and apply human review before consequential use.
+Inspect examples from every model. Translation systems can omit or add meaning, reflect dataset biases, misrepresent cultural context, or mishandle sensitive text. Use fluent human review for consequential or sensitive translations, document limitations, and do not treat generated output as verified fact.
 
-## Repository contents
+## Repository layout
 
-At present, this repository contains only this README, a license file, and a .gitignore. Implementation, environment/dependency files, dataset references, predictions, plots, and results are pending.
+- `scripts/prepare_data.py` — download and export a seeded, bounded dataset subset.
+- `scripts/train_basic_transformer.py` — train the encoder-decoder baseline from random initialization.
+- `scripts/train_pretrained.py` — fine-tune an encoder-decoder or causal model.
+- `scripts/evaluate.py` — generate translations, save predictions, and calculate metrics.
+- `requirements.txt` — Python dependencies.
+- `data/processed/` and `outputs/` — generated locally; do not commit model weights or dataset files.
 
-## Running the project
+## Remaining assignment work
 
-No runnable implementation or dependency list is present yet. Add the notebook or source files and a reproducible environment specification before documenting installation and execution commands here. Do not commit restricted or licensed dataset content unless its terms permit redistribution; provide the official dataset source and download/preparation instructions instead.
+- [ ] Run dataset preparation and record actual subset counts and preprocessing.
+- [ ] Train the basic Transformer and fine-tune mT5.
+- [ ] Prompt or fine-tune LLaMA and Gemma.
+- [ ] Evaluate all models on the exact same test file and compare temperature settings.
+- [ ] Review translation examples and write the model comparison, responsible-use discussion, and evidence-based conclusion.
+- [ ] Verify dataset and model license/access requirements and capture the software/hardware environment.
 
-## Reproducibility checklist
-
-- [ ] Select language pair and publicly available parallel dataset; record source and license.
-- [ ] Add preprocessing and documented train/validation/test splits.
-- [ ] Implement and document all four systems.
-- [ ] Record checkpoints, tokenizer, parameter counts, settings, hardware, and random seeds.
-- [ ] Save test translations and metric outputs.
-- [ ] Measure runtime and conduct temperature analysis.
-- [ ] Add comparison, conclusion, representative examples, and ethics discussion.
-- [ ] Add dependencies and verified execution instructions.
