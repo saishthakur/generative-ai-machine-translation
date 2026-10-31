@@ -132,6 +132,11 @@ def main() -> None:
     training_metrics = dict(result.metrics)
     training_metrics["training_seconds_wall_clock"] = training_seconds
     training_metrics["parameter_count"] = sum(p.numel() for p in model.parameters())
+    training_metrics["model_id"] = args.model
+    training_metrics["architecture"] = args.architecture
+    training_metrics["max_length"] = args.max_length
+    training_metrics["batch_size"] = args.batch_size
+    training_metrics["epochs_requested"] = args.epochs
     (args.output_dir / "training_metrics.json").write_text(
         json.dumps(training_metrics, indent=2), encoding="utf-8"
     )
