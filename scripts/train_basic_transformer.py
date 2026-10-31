@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -27,6 +29,10 @@ def main() -> None:
     parser.add_argument("--max-length", type=int, default=256)
     parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument("--seed", type=int, default=4403)
+    parser.add_argument("--auto-prepare", action="store_true", help="prepare missing CSV splits before training")
+    parser.add_argument("--prepare-train-rows", type=int, default=1000)
+    parser.add_argument("--prepare-validation-rows", type=int, default=100)
+    parser.add_argument("--prepare-test-rows", type=int, default=100)
     parser.add_argument("--d-model", type=int, default=256)
     parser.add_argument("--layers", type=int, default=4)
     parser.add_argument("--heads", type=int, default=4)
@@ -49,11 +55,32 @@ def main() -> None:
     )
     model = T5ForConditionalGeneration(config)  # random initialization: no pretrained weights
 
+    train_path = args.data_dir / "train.csv"
+    valid_path = args.data_dir / "validation.csv"
+    if args.auto_prepare and (not train_path.exists() or not valid_path.exists()):
+        prepare_script = Path(__file__).with_name("prepare_data.py")
+        subprocess.run(
+            [
+                sys.executable, str(prepare_script),
+                "--output-dir", str(args.data_dir),
+                "--train-rows", str(args.prepare_train_rows),
+                "--validation-rows", str(args.prepare_validation_rows),
+                "--test-rows", str(args.prepare_test_rows),
+                "--seed", str(args.seed),
+            ],
+            check=True,
+        )
+    if not train_path.exists() or not valid_path.exists():
+        raise FileNotFoundError(
+            f"Expected {train_path} and {valid_path}. Run scripts/prepare_data.py first "
+            f"or pass --auto-prepare. Current working directory: {Path.cwd()}"
+        )
+
     data = load_dataset(
         "csv",
         data_files={
-            "train": str(args.data_dir / "train.csv"),
-            "validation": str(args.data_dir / "validation.csv"),
+            "train": str(train_path),
+            "validation": str(valid_path),
         },
     )
 
