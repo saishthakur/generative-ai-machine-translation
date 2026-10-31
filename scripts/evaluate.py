@@ -19,8 +19,8 @@ def main() -> None:
     parser.add_argument("--test", type=Path, default=Path("data/processed/test.csv"))
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/evaluation"))
     parser.add_argument("--batch-size", type=int, default=4)
-    parser.add_argument("--max-input-length", type=int, default=128)
-    parser.add_argument("--max-new-tokens", type=int, default=128)
+    parser.add_argument("--max-input-length", type=int, default=256)
+    parser.add_argument("--max-new-tokens", type=int, default=256)
     parser.add_argument("--temperature", type=float, default=0.0)
     args = parser.parse_args()
 
@@ -100,6 +100,10 @@ def main() -> None:
         "parameter_count": params,
         "temperature": args.temperature,
         "device": str(device),
+        "batch_size": args.batch_size,
+        "max_input_length": args.max_input_length,
+        "max_new_tokens": args.max_new_tokens,
+        "sacrebleu_version": sacrebleu.__version__,
     }
     output_json = args.output_dir / (output_csv.stem + "_metrics.json")
     output_json.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
