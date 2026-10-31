@@ -24,7 +24,7 @@ def main() -> None:
     parser.add_argument("--tokenizer", default="google/byt5-small")
     parser.add_argument("--epochs", type=float, default=5.0)
     parser.add_argument("--batch-size", type=int, default=16)
-    parser.add_argument("--max-length", type=int, default=128)
+    parser.add_argument("--max-length", type=int, default=256)
     parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument("--seed", type=int, default=4403)
     parser.add_argument("--d-model", type=int, default=256)
@@ -111,6 +111,11 @@ def main() -> None:
     training_metrics = dict(result.metrics)
     training_metrics["training_seconds_wall_clock"] = training_seconds
     training_metrics["parameter_count"] = sum(p.numel() for p in model.parameters())
+    training_metrics["architecture"] = "randomly_initialized_encoder_decoder"
+    training_metrics["tokenizer"] = args.tokenizer
+    training_metrics["max_length"] = args.max_length
+    training_metrics["batch_size"] = args.batch_size
+    training_metrics["epochs_requested"] = args.epochs
     (args.output_dir / "training_metrics.json").write_text(
         json.dumps(training_metrics, indent=2), encoding="utf-8"
     )
