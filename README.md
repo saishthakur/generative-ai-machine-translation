@@ -100,6 +100,7 @@ The decoder-only models were prompted rather than fine-tuned. Example evaluation
 - `scripts/` — data preparation, training, evaluation, and summary utilities.
 - `notebooks/` — Kaggle workflows, including the submitted end-to-end GPU notebook.
 - `results/2026-11-en-hi/` — metrics, all submitted prediction CSVs, training metrics, and PNG figures.
+- `CITATION.cff` — citation metadata for the software project.
 - `requirements.txt` — Python dependencies.
 
 ## References
@@ -107,3 +108,7 @@ The decoder-only models were prompted rather than fine-tuned. Example evaluation
 - OPUS-100 dataset: [Hugging Face dataset card](https://huggingface.co/datasets/Helsinki-NLP/opus-100)
 - OPUS-100 paper: [Zhang et al. (2020), ACL Anthology](https://aclanthology.org/2020.acl-main.148/)
 - Original corpus: [OPUS](https://opus.nlpl.eu/)
+
+## License and third-party terms
+
+The repository's software is provided under the [MIT License](LICENSE). Dataset terms and the LLaMA/Gemma checkpoint terms are separate and may restrict use or redistribution. The repository does not include the source dataset or model weights; review each provider's current terms before using the workflow or sharing derived artifacts.

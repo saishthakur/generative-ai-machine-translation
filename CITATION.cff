@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: >-
+  If you use this project, please cite it using the metadata in this file.
+title: English-to-Hindi Machine Translation with Generative Models
+authors:
+  - family-names: Thakur
+    given-names: Saish
+type: software
+repository-code: 'https://github.com/saishthakur/generative-ai-machine-translation'
+license: MIT
