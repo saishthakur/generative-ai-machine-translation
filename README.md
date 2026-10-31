@@ -159,3 +159,22 @@ Inspect examples from every model. Translation systems can omit or add meaning, 
 - [ ] Review translation examples and write the model comparison, responsible-use discussion, and evidence-based conclusion.
 - [ ] Verify dataset and model license/access requirements and capture the software/hardware environment.
 
+
+
+## Expected results (planning ranges)
+
+The following are typical planning ranges for a 1,000-example OPUS-100 English-to-Hindi test set. They are estimates for experiment planning, not measured results from this repository. Actual scores depend on the sampled data, preprocessing, hardware, decoding settings, and training stability.
+
+| System | Typical BLEU | Typical chrF | Expected behavior |
+| --- | ---: | ---: | --- |
+| Basic Transformer from scratch, 20k training pairs | 2–10 | 20–35 | Often weak and inconsistent; sensitive to training time |
+| mT5-small fine-tuned for 1 epoch | 8–20 | 30–45 | Usually the strongest supervised result in this small setup |
+| LLaMA 3.2 1B Instruct, zero-shot | 2–12 | 20–40 | May translate fluently but omit content or produce explanations |
+| Gemma 3 1B IT, zero-shot | 3–14 | 22–42 | Can work on short sentences, but output formatting may vary |
+| LLaMA or Gemma fine-tuned on 20k pairs | 8–18 | 30–45 | Depends strongly on GPU memory, truncation, and training stability |
+
+These ranges must not be entered into `outputs/results_summary.csv` as measured results. Replace them with the metric JSON files produced by the AWS or Kaggle runs. For context, an older OPUS-MT English-to-Hindi checkpoint reports about 16 BLEU on a different Tatoeba test set; that number is not directly comparable to this project. See the [OPUS-100 corpus](https://opus.nlpl.eu/opus-100.php) and the [OPUS-MT reference](https://www.atyun.com/models/info/Helsinki-NLP/opus-mt-en-hi.html?lang=en).
+
+For the report, the expected comparison is that fine-tuned mT5 will generally outperform the randomly initialized Transformer because it starts from multilingual pretrained representations. Zero-shot LLaMA and Gemma may produce fluent Hindi but can add explanations, omit content, or vary their output format. BLEU and chrF should therefore be interpreted together with manual inspection.
+
+Temperature guidance: use `temperature=0` for reproducible decoding and the clearest BLEU comparison. Values such as `0.3` and `0.7` produce more varied output and often lower BLEU or chrF, so record the temperature for every run.
