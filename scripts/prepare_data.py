@@ -67,3 +67,6 @@ def main() -> None:
     print(f"Dataset: {args.dataset} ({args.config}); seed={args.seed}")
     print("Keep data/processed local unless the dataset terms explicitly allow redistribution.")
 
+
+if __name__ == "__main__":
+    main()
