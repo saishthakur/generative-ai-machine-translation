@@ -1,0 +1,16 @@
+{
+  "model": "google/gemma-3-1b-it",
+  "architecture": "causal",
+  "test_examples": 1000,
+  "bleu": 1.0683147573649836,
+  "chrf": 13.48817252364139,
+  "inference_seconds": 1613.18038583,
+  "seconds_per_example": 1.61318038583,
+  "parameter_count": 999885952,
+  "temperature": 0.3,
+  "device": "cuda",
+  "batch_size": 8,
+  "max_input_length": 256,
+  "max_new_tokens": 128,
+  "sacrebleu_version": "2.6.0"
+}

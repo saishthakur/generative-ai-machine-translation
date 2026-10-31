@@ -1,151 +1,109 @@
-# Generative AI for Machine Translation
+# English-to-Hindi Machine Translation with Generative Models
 
-A comparative English-to-Hindi machine-translation project for Foundations of Generative AI (ICT4403), Assignment 3. The workflow covers a randomly initialized encoder-decoder Transformer, fine-tuned mT5, and prompted or fine-tuned LLaMA and Gemma systems.
+Comparative machine-translation experiments for Foundations of Generative AI (ICT4403), Assignment 3. The project evaluates a randomly initialized encoder-decoder Transformer, fine-tuned mT5-small, and prompted LLaMA 3.2 1B and Gemma 3 1B systems on OPUS-100 English-Hindi.
 
-> **Status:** Training and evaluation scripts are now in the repository. No model has been trained and no experiment results have been collected yet. Results must come from running the commands below; the repository does not claim performance figures.
+## Results at a glance
 
-## Objective
+The submitted run covers 1,000 held-out examples. At temperature 0, **mT5-small has the highest BLEU (4.80)** and **LLaMA 3.2 1B has the highest chrF (22.52)**. There is no single winner across both metrics. All four absolute scores are low, so these results indicate substantial remaining translation errors and should not be presented as production-quality translation.
 
-Compare encoder-decoder and decoder-only systems on the same held-out English-to-Hindi test examples. Evaluate translation quality, training or fine-tuning time, inference time, parameter count, and responsible-use concerns.
+| System | Architecture / adaptation | BLEU | chrF | Train time | Inference (s/example) | Parameters |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Basic Transformer | Encoder-decoder; trained from scratch | 0.30 | 8.12 | 7.2 min | 0.061 | 7.4M |
+| mT5-small | Encoder-decoder; fine-tuned | **4.80** | 19.21 | 46.9 min | 0.136 | 300.2M |
+| LLaMA 3.2 1B Instruct | Decoder-only; prompted | 4.03 | **22.52** | Not fine-tuned | 1.368 | 1,235.8M |
+| Gemma 3 1B IT | Decoder-only; prompted | 1.09 | 13.48 | Not fine-tuned | 1.525 | 999.9M |
+
+The encoder-decoder models were evaluated with batch size 32 and up to 256 new tokens; the decoder-only models used batch size 8 and up to 128 new tokens. Runtime comparisons are therefore indicative, not perfectly controlled. Detailed measurements, sampling-temperature results, training metrics, and per-example predictions are in [`results/2026-11-en-hi/`](results/2026-11-en-hi/).
+
+See the [detailed results and responsible-use analysis](docs/RESULTS_AND_ANALYSIS.md) for exact settings, metric tables, a translation example, and limitations.
+
+### Figures
+
+![Overall metric comparison](results/2026-11-en-hi/figures/model_comparison.png)
+
+Individual model charts: [Basic Transformer](results/2026-11-en-hi/figures/basic_transformer_results.png) · [mT5-small](results/2026-11-en-hi/figures/mt5-small_results.png) · [LLaMA 3.2 1B](results/2026-11-en-hi/figures/llama_32_1b_results.png) · [Gemma 3 1B](results/2026-11-en-hi/figures/gemma_3_1b_results.png)
+
+Temperature charts: [LLaMA](results/2026-11-en-hi/figures/llama_32_1b_temperature.png) · [Gemma](results/2026-11-en-hi/figures/gemma_3_1b_temperature.png)
+
+## Assignment objective and approach
+
+The objective is to compare encoder-decoder and decoder-only translation systems on a shared English-to-Hindi test set, measuring BLEU, chrF, training or fine-tuning time, inference time, and parameter count. The assignment also asks for analysis of temperature and responsible-use risks.
+
+| Model | Model family | Method |
+| --- | --- | --- |
+| Basic Transformer | Encoder-decoder | Randomly initialized model with ByT5 tokenizer; trained for 3 epochs |
+| mT5-small | Encoder-decoder | `google/mt5-small`; fine-tuned for 3 epochs |
+| LLaMA 3.2 1B Instruct | Decoder-only | Zero-shot instruction prompting; no fine-tuning |
+| Gemma 3 1B IT | Decoder-only | Zero-shot instruction prompting; no fine-tuning |
+
+The submitted notebook describes a seeded subset of 20,000 training, 1,000 validation, and 1,000 test examples from OPUS-100 `en-hi`. It is saved as [`notebooks/assignment3_gpu_workflow.ipynb`](notebooks/assignment3_gpu_workflow.ipynb). The downloaded corpus and model checkpoints are not included in this repository.
 
 ## Dataset
 
-- **Corpus:** [OPUS-100, English-Hindi configuration](https://huggingface.co/datasets/Helsinki-NLP/opus-100)
-- **Dataset source:** [OPUS](https://opus.nlpl.eu/)
-- **Configuration:** `en-hi`; fields are parallel English (`en`) and Hindi (`hi) strings in the `translation` column.
-- **Published split sizes:** 534,319 training pairs and 2,000 pairs in each of validation and test (as listed in the dataset card).
-- **Working subset:** The preparation script defaults to 20,000 training, 1,000 validation, and 1,000 test examples. It keeps the corpus-provided validation/test splits and shuffles only the training stream with seed 4403. Preprocessing currently trims leading/trailing whitespace and drops empty pairs; it does not perform deduplication or length filtering.
-- **License:** The Hugging Face dataset card currently lists the license as unknown. Check the corpus and underlying source terms for the intended use, cite OPUS-100, and do not redistribute downloaded data unless permitted.
+- **Dataset:** [OPUS-100 English-Hindi on Hugging Face](https://huggingface.co/datasets/Helsinki-NLP/opus-100), configuration `en-hi`.
+- **Original corpus:** [OPUS](https://opus.nlpl.eu/).
+- **Language direction:** English source (`en`) to Hindi reference (`hi`).
+- **Subset:** 20,000 training, 1,000 validation, and 1,000 test examples, seed 4403, as specified in the submitted notebook.
+- **Preprocessing:** trim whitespace and drop empty parallel pairs; the source notebook's preparation script downloads the selected split streams and writes CSV files.
+- **Data terms:** consult the current dataset card and source-corpus terms before redistribution. The dataset is not bundled here.
 
-OPUS-100's corpus card describes its language coverage and its pre-separated train, development, and test samples. See the [dataset card](https://huggingface.co/datasets/Helsinki-NLP/opus-100) and the [OPUS-100 paper](https://aclanthology.org/2020.acl-main.148/). The default subset limits are intended to keep experiments manageable; state the actual counts and any additional filtering in the final report.
+## Evaluation and interpretation
 
-## Models
+Metrics are calculated with SacreBLEU 2.6.0. Reported BLEU and chrF are on their standard 0–100 scales. The same 1,000 test examples were used across systems. Detailed metrics are stored beside each predictions CSV as JSON; the consolidated file is [`results_summary.csv`](results/2026-11-en-hi/results_summary.csv).
 
-| System | Architecture | Workflow |
-| --- | --- | --- |
-| Basic Transformer | Encoder-decoder | T5-style Transformer configuration initialized from scratch; ByT5 tokenizer only |
-| mT5 | Encoder-decoder | Fine-tune `google/mt5-small` |
-| LLaMA | Decoder-only | Prompt the base model for translation, or fine-tune using the provided causal training path |
-| Gemma | Decoder-only | Prompt the base model for translation, or fine-tune using the provided causal training path |
+The scratch Transformer is smallest and fastest at inference, but its quality scores are particularly weak. Fine-tuned mT5 has the best BLEU, while prompted LLaMA has the best chrF. The decoder-only prompts give useful multilingual output without fine-tuning, but both are much larger and substantially slower per example in this run. These outcomes reflect the tested checkpoints, prompt, subset, and hardware, not architecture in general.
 
-For the model comparison, use small checkpoints that fit the available hardware and record exact model IDs. Example compact checkpoints are [Llama 3.2 1B](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct) and [Gemma 3 1B Instruct](https://huggingface.co/google/gemma-3-1b-it). Llama and Gemma access may require accepting their respective terms and authenticating with Hugging Face. The LLaMA and Gemma evaluation prompts are English-to-Hindi instructions; document any prompt changes.
+### Sampling temperature
 
-## Kaggle GPU notebook
+The greedy run (`T=0`) scores highest on both reported metrics for LLaMA. Raising temperature to 0.3 causes small drops; at 0.7 both BLEU and chrF drop further. Gemma's chrF changes little between 0 and 0.3, then decreases at 0.7; BLEU declines slightly across the tested temperatures. A single run at each setting is descriptive only: sampled decoding is stochastic, and repeated seeds would be needed to estimate variability.
 
-For a CPU-only run on Kaggle, use [notebooks/kaggle_cpu_training.ipynb](notebooks/kaggle_cpu_training.ipynb). In Kaggle, create a notebook and use **File → Load from URL** with the [raw CPU notebook URL](https://raw.githubusercontent.com/saishthakur/generative-ai-machine-translation/main/notebooks/kaggle_cpu_training.ipynb). Enable Internet and choose CPU/None for the accelerator. This version uses 1,000 train, 100 validation, and 100 test examples, and hides CUDA from all scripts. It may take several hours. The notebook packages metrics and predictions into a ZIP. For LLaMA/Gemma access, use a Kaggle Secret named `HF_TOKEN` after accepting the model terms; never paste a token into the notebook.
+| Model | Temperature | BLEU | chrF |
+| --- | ---: | ---: | ---: |
+| LLaMA 3.2 1B | 0.0 | 4.03 | 22.52 |
+| LLaMA 3.2 1B | 0.3 | 3.96 | 22.49 |
+| LLaMA 3.2 1B | 0.7 | 3.17 | 21.27 |
+| Gemma 3 1B | 0.0 | 1.09 | 13.48 |
+| Gemma 3 1B | 0.3 | 1.07 | 13.49 |
+| Gemma 3 1B | 0.7 | 1.06 | 13.34 |
 
-A GPU version is also available at [notebooks/kaggle_training.ipynb](notebooks/kaggle_training.ipynb).
+## Responsible use and limitations
 
-## Setup
+Translation quality must be checked by a fluent Hindi speaker, especially for medical, legal, financial, emergency, or otherwise sensitive content. In the prediction files, inspect for omissions, additions, wrong named entities, English text left in the output, honorific/register errors, and culturally specific phrasing. The dataset and pretrained models may encode social or regional bias; fluent-sounding outputs can still distort meaning or hallucinate details. Do not treat a translation as verified fact or use this run as a substitute for professional human review.
 
-Python 3.10-3.12 is recommended. Model downloads and training require internet access. A CUDA GPU is strongly recommended for fine-tuning mT5, LLaMA, or Gemma. The basic Transformer can run on CPU, but training is likely to be slow.
+Mitigations include human review for consequential use, explicit disclosure that text is machine-generated, privacy-preserving handling of input, evaluation across domains and demographic or regional varieties, targeted terminology glossaries, and escalation or abstention when confidence is low. The current experiment does not report a human evaluation, confidence calibration, or repeated sampling runs.
+
+## Reproduce the workflow
+
+The supplied notebook is designed for Kaggle with Internet enabled, a GPU accelerator, and a Hugging Face `HF_TOKEN` stored as a Kaggle Secret to access gated checkpoints. Review model access terms and accept them in advance. Never commit access tokens, downloaded data, or model weights.
+
+For a local Python environment (Python 3.10–3.12 recommended):
 
 ```bash
 python -m venv .venv
-# Windows PowerShell:
-.venv\Scripts\Activate.ps1
-# macOS / Linux:
-# source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-## Step-by-step
-
-### 1. Prepare the dataset subset
+Prepare data and run the scripts in order; see the notebook for the full GPU workflow and settings:
 
 ```bash
 python scripts/prepare_data.py --train-rows 20000 --validation-rows 1000 --test-rows 1000 --seed 4403
+python scripts/train_basic_transformer.py --epochs 3 --batch-size 16 --max-length 256
+python scripts/train_pretrained.py --architecture seq2seq --model google/mt5-small --output-dir outputs/mt5-small --epochs 3 --batch-size 8
 ```
 
-This downloads only the selected split streams and writes `data/processed/{train,validation,test}.csv`. The script does not commit downloaded data. Use the same generated CSV test file for each model.
+The decoder-only models were prompted rather than fine-tuned. Example evaluation and summary commands are in the notebook and existing scripts. A CUDA GPU and model access are required for the larger checkpoints; adapt batch sizes for available memory. Do not upload generated local data or checkpoints unless their terms allow it.
 
-### 2. Train the basic Transformer from scratch
+## Repository contents
 
-```bash
-python scripts/train_basic_transformer.py --epochs 5 --batch-size 16 --max-length 256
-```
-
-It saves model files and `training_metrics.json` under `outputs/basic-transformer/`. The model weights are randomly initialized; the ByT5 tokenizer is used only for text encoding.
-
-### 3. Fine-tune mT5
-
-```bash
-python scripts/train_pretrained.py --architecture seq2seq --model google/mt5-small --output-dir outputs/mt5-small --epochs 1 --batch-size 4
-```
-
-For limited GPU memory, reduce the batch size and use `--gradient-checkpointing`. Record the actual settings used.
-
-### 4. Prompt LLaMA and Gemma
-
-The assignment permits suitable prompting for the decoder-only systems. Start with zero-shot prompting on the same test set:
-
-```bash
-python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B-Instruct --temperature 0 --output-dir outputs/llama
-python scripts/evaluate.py --architecture causal --model google/gemma-3-1b-it --temperature 0 --output-dir outputs/gemma
-```
-
-You may instead fine-tune either model on the training split (requires substantially more memory and accepted model access):
-
-```bash
-python scripts/train_pretrained.py --architecture causal --model meta-llama/Llama-3.2-1B-Instruct --output-dir outputs/llama-finetuned --epochs 1 --batch-size 1 --gradient-checkpointing
-python scripts/train_pretrained.py --architecture causal --model google/gemma-3-1b-it --output-dir outputs/gemma-finetuned --epochs 1 --batch-size 1 --gradient-checkpointing
-```
-
-The causal training script masks the English instruction and source from the language-model loss so that the model learns to produce the Hindi target. Prefer the prompting path when compute is limited. Follow each model's license and access requirements.
-
-### 5. Evaluate all four systems
-
-```bash
-python scripts/evaluate.py --architecture seq2seq --model outputs/basic-transformer --output-dir outputs/evaluation/basic
-python scripts/evaluate.py --architecture seq2seq --model outputs/mt5-small --output-dir outputs/evaluation/mt5
-python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B-Instruct --output-dir outputs/evaluation/llama
-python scripts/evaluate.py --architecture causal --model google/gemma-3-1b-it --output-dir outputs/evaluation/gemma
-```
-
-Each evaluation run writes predictions as CSV and metrics as JSON. Metrics include corpus BLEU, chrF, total and per-example inference time, parameter count, device, temperature, batch size, generation limit, and metric-library version. Training scripts also save training runtime and parameter count. For a fair runtime comparison, use the same machine, test rows, batch size, and generation limit.
-
-After completing runs, combine the JSON results into a report-ready CSV:
-
-```bash
-python scripts/summarize_results.py --outputs-dir outputs --output outputs/results_summary.csv
-```
-
-### 6. Analyze sampling temperature
-
-The evaluator uses deterministic decoding when temperature is zero. For causal models, repeat evaluation at several positive temperatures, for example:
-
-```bash
-python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B-Instruct --temperature 0.3 --output-dir outputs/evaluation/llama-t03
-python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B-Instruct --temperature 0.7 --output-dir outputs/evaluation/llama-t07
-python scripts/evaluate.py --architecture causal --model google/gemma-3-1b-it --temperature 0.3 --output-dir outputs/evaluation/gemma-t03
-python scripts/evaluate.py --architecture causal --model google/gemma-3-1b-it --temperature 0.7 --output-dir outputs/evaluation/gemma-t07
-```
-
-Compare BLEU/chrF and inspect sample translations for changes in fluency, consistency, and faithfulness. Record all generation settings. Sampling makes outputs stochastic; rerun with multiple seeds or report that limitation.
-
-## Results
-
-No results have been produced yet. Fill this table only after all runs finish. Include the exact checkpoint, subset size, hardware, batch size, decoding settings, and metric versions in the report.
-
-| Model | BLEU | chrF | Train / fine-tune time | Inference time | Parameters |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Basic Transformer | Pending | Pending | Pending | Pending | Pending |
-| mT5 | Pending | Pending | Pending | Pending | Pending |
-| LLaMA | Pending | Pending | N/A if prompted | Pending | Pending |
-| Gemma | Pending | Pending | N/A if prompted | Pending | Pending |
-
-## Responsible use
-
-Inspect examples from every model. Translation systems can omit or add meaning, reflect dataset biases, misrepresent cultural context, or mishandle sensitive text. Use fluent human review for consequential or sensitive translations, document limitations, and do not treat generated output as verified fact.
-
-## Repository layout
-
-- `scripts/prepare_data.py` — download and export a seeded, bounded dataset subset.
-- `scripts/train_basic_transformer.py` — train the encoder-decoder baseline from random initialization.
-- `scripts/train_pretrained.py` — fine-tune an encoder-decoder or causal model.
-- `scripts/evaluate.py` — generate translations, save predictions, and calculate metrics.
-- `scripts/summarize_results.py` — combine run metrics into a comparison CSV.
-- `notebooks/kaggle_cpu_training.ipynb` — resource-limited CPU workflow for Kaggle.
-- `notebooks/kaggle_training.ipynb` — GPU workflow for Kaggle.
+- `scripts/` — data preparation, training, evaluation, and summary utilities.
+- `notebooks/` — Kaggle workflows, including the submitted end-to-end GPU notebook.
+- `results/2026-11-en-hi/` — metrics, all submitted prediction CSVs, training metrics, and PNG figures.
 - `requirements.txt` — Python dependencies.
-- `data/processed/` and `outputs/` — generated locally; do not commit model weights or dataset files.
+
+## References
+
+- OPUS-100 dataset: [Hugging Face dataset card](https://huggingface.co/datasets/Helsinki-NLP/opus-100)
+- OPUS-100 paper: [Zhang et al. (2020), ACL Anthology](https://aclanthology.org/2020.acl-main.148/)
+- Original corpus: [OPUS](https://opus.nlpl.eu/)

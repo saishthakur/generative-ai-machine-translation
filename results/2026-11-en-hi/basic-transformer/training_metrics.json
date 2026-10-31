@@ -1,0 +1,15 @@
+{
+  "train_runtime": 434.5479,
+  "train_samples_per_second": 138.075,
+  "train_steps_per_second": 8.63,
+  "total_flos": 600238299217920.0,
+  "train_loss": 1.2381759979248046,
+  "epoch": 3.0,
+  "training_seconds_wall_clock": 434.83748684600005,
+  "parameter_count": 7411456,
+  "architecture": "randomly_initialized_encoder_decoder",
+  "tokenizer": "google/byt5-small",
+  "max_length": 256,
+  "batch_size": 16,
+  "epochs_requested": 3.0
+}

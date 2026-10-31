@@ -1,0 +1,15 @@
+{
+  "train_runtime": 2810.9983,
+  "train_samples_per_second": 21.345,
+  "train_steps_per_second": 2.668,
+  "total_flos": 3859170497740800.0,
+  "train_loss": 2.994761603800456,
+  "epoch": 3.0,
+  "training_seconds_wall_clock": 2811.655620783,
+  "parameter_count": 300176768,
+  "model_id": "google/mt5-small",
+  "architecture": "seq2seq",
+  "max_length": 256,
+  "batch_size": 8,
+  "epochs_requested": 3.0
+}

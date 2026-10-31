@@ -1,0 +1,16 @@
+{
+  "model": "outputs/mt5-small",
+  "architecture": "seq2seq",
+  "test_examples": 1000,
+  "bleu": 4.796941361428407,
+  "chrf": 19.205818198860186,
+  "inference_seconds": 136.2565826389996,
+  "seconds_per_example": 0.1362565826389996,
+  "parameter_count": 300176768,
+  "temperature": 0.0,
+  "device": "cuda",
+  "batch_size": 32,
+  "max_input_length": 256,
+  "max_new_tokens": 256,
+  "sacrebleu_version": "2.6.0"
+}

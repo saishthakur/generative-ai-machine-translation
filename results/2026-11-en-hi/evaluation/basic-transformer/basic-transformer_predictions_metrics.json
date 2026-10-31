@@ -1,0 +1,16 @@
+{
+  "model": "outputs/basic-transformer",
+  "architecture": "seq2seq",
+  "test_examples": 1000,
+  "bleu": 0.30352250820760934,
+  "chrf": 8.120814997980109,
+  "inference_seconds": 60.53732097499994,
+  "seconds_per_example": 0.06053732097499994,
+  "parameter_count": 7411456,
+  "temperature": 0.0,
+  "device": "cuda",
+  "batch_size": 32,
+  "max_input_length": 256,
+  "max_new_tokens": 256,
+  "sacrebleu_version": "2.6.0"
+}
