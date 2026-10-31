@@ -4,7 +4,7 @@ Comparative machine-translation experiments for Foundations of Generative AI (IC
 
 ## Results at a glance
 
-The submitted run covers 1,000 held-out examples. At temperature 0, **mT5-small has the highest BLEU (4.80)** and **LLaMA 3.2 1B has the highest chrF (22.52)**. There is no single winner across both metrics. All four absolute scores are low, so these results indicate substantial remaining translation errors and should not be presented as production-quality translation.
+The submitted run covers 1,000 held-out examples. At temperature 0, **mT5-small has the highest BLEU (4.80)** and **LLaMA 3.2 1B has the highest chrF (22.52)**. For the overall conclusion, LLaMA 3.2 1B is selected as the best-performing system in this run because it leads on chrF while remaining competitive on BLEU (4.03); mT5-small is the choice if BLEU is the primary criterion. All four absolute scores are low, so these results indicate substantial remaining translation errors and should not be presented as production-quality translation.
 
 | System | Architecture / adaptation | BLEU | chrF | Train time | Inference (s/example) | Parameters |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
@@ -52,6 +52,10 @@ The submitted notebook describes a seeded subset of 20,000 training, 1,000 valid
 Metrics are calculated with SacreBLEU 2.6.0. Reported BLEU and chrF are on their standard 0–100 scales. The same 1,000 test examples were used across systems. Detailed metrics are stored beside each predictions CSV as JSON; the consolidated file is [`results_summary.csv`](results/2026-11-en-hi/results_summary.csv).
 
 The scratch Transformer is smallest and fastest at inference, but its quality scores are particularly weak. Fine-tuned mT5 has the best BLEU, while prompted LLaMA has the best chrF. The decoder-only prompts give useful multilingual output without fine-tuning, but both are much larger and substantially slower per example in this run. These outcomes reflect the tested checkpoints, prompt, subset, and hardware, not architecture in general.
+
+### Conclusion
+
+Considering both quality metrics together, LLaMA 3.2 1B is the selected best-performing model for this experiment: it achieves the highest chrF (22.52) and the second-highest BLEU (4.03). mT5-small achieves the highest BLEU (4.80), so it is preferable if BLEU alone is the decision criterion. The conclusion is limited to this 1,000-example run and its decoding settings; the low scores and lack of human evaluation do not support deployment without further validation.
 
 ### Sampling temperature
 

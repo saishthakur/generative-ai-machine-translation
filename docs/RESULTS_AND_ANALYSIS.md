@@ -23,6 +23,10 @@
 
 These are the measurements from the submitted result files. mT5 leads on BLEU; LLaMA leads on chrF. A single overall winner cannot be established from these two metrics alone. Scores are low, especially for the scratch baseline, so the system outputs need substantial improvement and human review.
 
+## Conclusion
+
+For the assignment's single-model conclusion, LLaMA 3.2 1B is selected as the best overall in this run: it leads on chrF (22.524) and is second on BLEU (4.032). mT5-small remains the best choice if BLEU alone is prioritized (4.797). This is a qualified, run-specific selection rather than evidence of a general architectural advantage; the scores are low and no human evaluation or statistical significance analysis was performed.
+
 ## Temperature results for prompted models
 
 | Model | Temperature | BLEU | chrF | Inference seconds |
