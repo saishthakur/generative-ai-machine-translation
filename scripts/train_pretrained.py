@@ -7,6 +7,8 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import json
+import time
 from pathlib import Path
 
 from datasets import load_dataset
@@ -114,10 +116,18 @@ def main() -> None:
         data_collator=collator,
         processing_class=tokenizer,
     )
-    trainer.train()
+    started = time.perf_counter()
+    result = trainer.train()
+    training_seconds = time.perf_counter() - started
     trainer.save_model(str(args.output_dir))
     tokenizer.save_pretrained(str(args.output_dir))
-    print(f"Saved fine-tuned model and tokenizer to {args.output_dir}")
+    training_metrics = dict(result.metrics)
+    training_metrics["training_seconds_wall_clock"] = training_seconds
+    training_metrics["parameter_count"] = sum(p.numel() for p in model.parameters())
+    (args.output_dir / "training_metrics.json").write_text(
+        json.dumps(training_metrics, indent=2), encoding="utf-8"
+    )
+    print(f"Saved fine-tuned model, tokenizer, and training metrics to {args.output_dir}")
 
 
 if __name__ == "__main__":
