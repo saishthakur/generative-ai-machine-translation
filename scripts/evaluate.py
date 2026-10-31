@@ -28,6 +28,8 @@ def main() -> None:
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
+    if args.architecture == "causal":
+        tokenizer.padding_side = "left"
     cls = AutoModelForSeq2SeqLM if args.architecture == "seq2seq" else AutoModelForCausalLM
     model = cls.from_pretrained(args.model).to(device).eval()
 
