@@ -56,7 +56,7 @@ This downloads only the selected split streams and writes `data/processed/{train
 ### 2. Train the basic Transformer from scratch
 
 ```bash
-python scripts/train_basic_transformer.py --epochs 5 --batch-size 16
+python scripts/train_basic_transformer.py --epochs 5 --batch-size 16 --max-length 256
 ```
 
 It saves model files and `training_metrics.json` under `outputs/basic-transformer/`. The model weights are randomly initialized; the ByT5 tokenizer is used only for text encoding.
