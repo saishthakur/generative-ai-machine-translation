@@ -30,6 +30,10 @@ OPUS-100's corpus card describes its language coverage and its pre-separated tra
 
 For the model comparison, use small checkpoints that fit the available hardware and record exact model IDs. Example compact checkpoints are [Llama 3.2 1B](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct) and [Gemma 3 1B Instruct](https://huggingface.co/google/gemma-3-1b-it). Llama and Gemma access may require accepting their respective terms and authenticating with Hugging Face. The LLaMA and Gemma evaluation prompts are English-to-Hindi instructions; document any prompt changes.
 
+## Kaggle GPU notebook
+
+A ready-to-run Kaggle notebook is available at [notebooks/kaggle_training.ipynb](notebooks/kaggle_training.ipynb). In Kaggle, create a notebook and use **File → Load from URL** with the [raw notebook URL](https://raw.githubusercontent.com/saishthakur/generative-ai-machine-translation/main/notebooks/kaggle_training.ipynb). Enable Internet and select the GPU accelerator before running. The notebook packages metrics and predictions into a ZIP so they can be downloaded and added to this repository. For LLaMA/Gemma access, use a Kaggle Secret named `HF_TOKEN` after accepting the model terms; never paste a token into the notebook.
+
 ## Setup
 
 Python 3.10-3.12 is recommended. Model downloads and training require internet access. A CUDA GPU is strongly recommended for fine-tuning mT5, LLaMA, or Gemma. The basic Transformer can run on CPU, but training is likely to be slow.
@@ -139,6 +143,7 @@ Inspect examples from every model. Translation systems can omit or add meaning, 
 - `scripts/train_pretrained.py` — fine-tune an encoder-decoder or causal model.
 - `scripts/evaluate.py` — generate translations, save predictions, and calculate metrics.
 - `scripts/summarize_results.py` — combine run metrics into a comparison CSV.
+- `notebooks/kaggle_training.ipynb` — run the experiment workflow on Kaggle GPU.
 - `requirements.txt` — Python dependencies.
 - `data/processed/` and `outputs/` — generated locally; do not commit model weights or dataset files.
 
