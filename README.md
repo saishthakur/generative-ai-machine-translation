@@ -32,7 +32,9 @@ For the model comparison, use small checkpoints that fit the available hardware 
 
 ## Kaggle GPU notebook
 
-A ready-to-run Kaggle notebook is available at [notebooks/kaggle_training.ipynb](notebooks/kaggle_training.ipynb). In Kaggle, create a notebook and use **File → Load from URL** with the [raw notebook URL](https://raw.githubusercontent.com/saishthakur/generative-ai-machine-translation/main/notebooks/kaggle_training.ipynb). Enable Internet and select the GPU accelerator before running. The notebook packages metrics and predictions into a ZIP so they can be downloaded and added to this repository. For LLaMA/Gemma access, use a Kaggle Secret named `HF_TOKEN` after accepting the model terms; never paste a token into the notebook.
+For a CPU-only run on Kaggle, use [notebooks/kaggle_cpu_training.ipynb](notebooks/kaggle_cpu_training.ipynb). In Kaggle, create a notebook and use **File → Load from URL** with the [raw CPU notebook URL](https://raw.githubusercontent.com/saishthakur/generative-ai-machine-translation/main/notebooks/kaggle_cpu_training.ipynb). Enable Internet and choose CPU/None for the accelerator. This version uses 1,000 train, 100 validation, and 100 test examples, and hides CUDA from all scripts. It may take several hours. The notebook packages metrics and predictions into a ZIP. For LLaMA/Gemma access, use a Kaggle Secret named `HF_TOKEN` after accepting the model terms; never paste a token into the notebook.
+
+A GPU version is also available at [notebooks/kaggle_training.ipynb](notebooks/kaggle_training.ipynb).
 
 ## Setup
 
@@ -143,7 +145,8 @@ Inspect examples from every model. Translation systems can omit or add meaning, 
 - `scripts/train_pretrained.py` — fine-tune an encoder-decoder or causal model.
 - `scripts/evaluate.py` — generate translations, save predictions, and calculate metrics.
 - `scripts/summarize_results.py` — combine run metrics into a comparison CSV.
-- `notebooks/kaggle_training.ipynb` — run the experiment workflow on Kaggle GPU.
+- `notebooks/kaggle_cpu_training.ipynb` — resource-limited CPU workflow for Kaggle.
+- `notebooks/kaggle_training.ipynb` — GPU workflow for Kaggle.
 - `requirements.txt` — Python dependencies.
 - `data/processed/` and `outputs/` — generated locally; do not commit model weights or dataset files.
 
