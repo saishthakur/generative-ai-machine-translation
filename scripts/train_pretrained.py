@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -33,13 +35,33 @@ def main() -> None:
     parser.add_argument("--max-length", type=int, default=128)
     parser.add_argument("--learning-rate", type=float, default=5e-5)
     parser.add_argument("--seed", type=int, default=4403)
+    parser.add_argument("--auto-prepare", action="store_true", help="prepare missing CSV splits before training")
+    parser.add_argument("--prepare-train-rows", type=int, default=1000)
+    parser.add_argument("--prepare-validation-rows", type=int, default=100)
+    parser.add_argument("--prepare-test-rows", type=int, default=100)
     parser.add_argument("--gradient-checkpointing", action="store_true")
     args = parser.parse_args()
 
     train_path = args.data_dir / "train.csv"
     valid_path = args.data_dir / "validation.csv"
+    if args.auto_prepare and (not train_path.exists() or not valid_path.exists()):
+        prepare_script = Path(__file__).with_name("prepare_data.py")
+        subprocess.run(
+            [
+                sys.executable, str(prepare_script),
+                "--output-dir", str(args.data_dir),
+                "--train-rows", str(args.prepare_train_rows),
+                "--validation-rows", str(args.prepare_validation_rows),
+                "--test-rows", str(args.prepare_test_rows),
+                "--seed", str(args.seed),
+            ],
+            check=True,
+        )
     if not train_path.exists() or not valid_path.exists():
-        raise FileNotFoundError("Run scripts/prepare_data.py before training.")
+        raise FileNotFoundError(
+            f"Expected {train_path} and {valid_path}. Run scripts/prepare_data.py first "
+            f"or pass --auto-prepare. Current working directory: {Path.cwd()}"
+        )
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     if args.architecture == "causal" and tokenizer.pad_token is None:
