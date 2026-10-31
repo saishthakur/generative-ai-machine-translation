@@ -28,7 +28,7 @@ OPUS-100's corpus card describes its language coverage and its pre-separated tra
 | LLaMA | Decoder-only | Prompt the base model for translation, or fine-tune using the provided causal training path |
 | Gemma | Decoder-only | Prompt the base model for translation, or fine-tune using the provided causal training path |
 
-For the model comparison, use small checkpoints that fit the available hardware and record exact model IDs. Example compact checkpoints are [Llama 3.2 1B](https://huggingface.co/meta-llama/Llama-3.2-1B) and [Gemma 3 1B Instruct](https://huggingface.co/google/gemma-3-1b-it). Llama and Gemma access may require accepting their respective terms and authenticating with Hugging Face. The LLaMA and Gemma evaluation prompts are English-to-Hindi instructions; document any prompt changes.
+For the model comparison, use small checkpoints that fit the available hardware and record exact model IDs. Example compact checkpoints are [Llama 3.2 1B](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct) and [Gemma 3 1B Instruct](https://huggingface.co/google/gemma-3-1b-it). Llama and Gemma access may require accepting their respective terms and authenticating with Hugging Face. The LLaMA and Gemma evaluation prompts are English-to-Hindi instructions; document any prompt changes.
 
 ## Setup
 
@@ -74,14 +74,14 @@ For limited GPU memory, reduce the batch size and use `--gradient-checkpointing`
 The assignment permits suitable prompting for the decoder-only systems. Start with zero-shot prompting on the same test set:
 
 ```bash
-python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B --temperature 0 --output-dir outputs/llama
+python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B-Instruct --temperature 0 --output-dir outputs/llama
 python scripts/evaluate.py --architecture causal --model google/gemma-3-1b-it --temperature 0 --output-dir outputs/gemma
 ```
 
 You may instead fine-tune either model on the training split (requires substantially more memory and accepted model access):
 
 ```bash
-python scripts/train_pretrained.py --architecture causal --model meta-llama/Llama-3.2-1B --output-dir outputs/llama-finetuned --epochs 1 --batch-size 1 --gradient-checkpointing
+python scripts/train_pretrained.py --architecture causal --model meta-llama/Llama-3.2-1B-Instruct --output-dir outputs/llama-finetuned --epochs 1 --batch-size 1 --gradient-checkpointing
 python scripts/train_pretrained.py --architecture causal --model google/gemma-3-1b-it --output-dir outputs/gemma-finetuned --epochs 1 --batch-size 1 --gradient-checkpointing
 ```
 
@@ -92,7 +92,7 @@ The causal training script masks the English instruction and source from the lan
 ```bash
 python scripts/evaluate.py --architecture seq2seq --model outputs/basic-transformer --output-dir outputs/evaluation/basic
 python scripts/evaluate.py --architecture seq2seq --model outputs/mt5-small --output-dir outputs/evaluation/mt5
-python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B --output-dir outputs/evaluation/llama
+python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B-Instruct --output-dir outputs/evaluation/llama
 python scripts/evaluate.py --architecture causal --model google/gemma-3-1b-it --output-dir outputs/evaluation/gemma
 ```
 
@@ -103,8 +103,8 @@ Each evaluation run writes predictions as CSV and metrics as JSON. Metrics inclu
 The evaluator uses deterministic decoding when temperature is zero. For causal models, repeat evaluation at several positive temperatures, for example:
 
 ```bash
-python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B --temperature 0.3 --output-dir outputs/evaluation/llama-t03
-python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B --temperature 0.7 --output-dir outputs/evaluation/llama-t07
+python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B-Instruct --temperature 0.3 --output-dir outputs/evaluation/llama-t03
+python scripts/evaluate.py --architecture causal --model meta-llama/Llama-3.2-1B-Instruct --temperature 0.7 --output-dir outputs/evaluation/llama-t07
 python scripts/evaluate.py --architecture causal --model google/gemma-3-1b-it --temperature 0.3 --output-dir outputs/evaluation/gemma-t03
 python scripts/evaluate.py --architecture causal --model google/gemma-3-1b-it --temperature 0.7 --output-dir outputs/evaluation/gemma-t07
 ```
